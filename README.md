@@ -11,3 +11,4 @@ Little web app that generates semantic metro maps.
 - [`semantic-diagrams`](https://github.com/gopeter/semantic-diagrams)
 - [`semantic-graphics`](https://github.com/gopeter/semantic-graphics)
 - [`semantic-metro-map`](https://github.com/gopeter/semantic-metro-map)
+- [`semantic-metro-map-generator`](https://github.com/gopeter/semantic-metro-map-generator)

@@ -1,0 +1,29 @@
+/****************************
+ * General
+ ***************************/
+
+* {
+	margin: 0px;
+	padding: 0px;
+}
+
+body {
+	font-family: 'Helvetica', 'Arial', sans-serif;
+	color: #454545;	
+  background-color: #fefefe;	
+  font-size: 12px;
+}
+
+a {
+  color: #454545;
+}
+
+.clearfix:before,
+.clearfix:after {
+    content: " ";
+    display: table;
+}
+
+.clearfix:after {
+    clear: both;
+}

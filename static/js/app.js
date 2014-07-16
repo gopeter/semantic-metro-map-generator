@@ -1,5 +1,7 @@
 var SMMG = function() {
   
+  this.data = [],
+  
   // API settings
   this.API = {
     "base": "http://semantic-metro-map-gtfs-api.herokuapp.com/api/",
@@ -16,19 +18,27 @@ SMMG.prototype = {
   
     // event handler
     $(document).hammer();
-    $(document).on('tap', 'button', $.proxy(this.generateMap, this));
+    $(document).on('tap', 'button', $.proxy(this.fetchData, this));
       
   },
   
   /***************************************
   * Helpers 
-  ***************************************/
-
-  /***************************************
-  * Events
-  ***************************************/
+  ***************************************/  
+    
+  objectLength: function(obj) {
+    var len = 0;
+    for (var o in obj) {
+        len++;
+    }
+    return len;
+  },
   
-  generateMap: function() {
+  /***************************************
+  * Events/Core functions
+  ***************************************/  
+  
+  fetchData: function() {
 
     var self = this;
 
@@ -43,24 +53,34 @@ SMMG.prototype = {
       // for each route ...
       $.each(routes, function(i, route) {
       
-        // ... fetch all stops twice for each direction (0/1 for inbound/outbound)
-        for (var direction = 0; direction <= 1; direction++) {
-          $.when(
-            $.ajax({
-              url: self.API.base + 'stops/' + self.API.agency + '/' + route.route_id + '/' + direction,
-              dataType: 'json'
-            })
-          ).then(function(stops) {      
-          
-            // now lets build our mega object!
-            console.log(stops);
+        // ... fetch all stops
+        $.ajax({
+          url: self.API.base + 'stops/' + self.API.agency + '/' + route.route_id,
+          dataType: 'json',
+          success: function(stops) {
+
+            self.data.push({
+              route: route,
+              stops: stops
+            });          
             
-          });        
-        }
+            // start map generation when all requests are done
+            if (self.data.length == self.objectLength(routes)) {
+              self.generateMap();
+            }
+            
+          }
+        })
         
       });
 
     });
+    
+  },
+  
+  generateMap: function() {
+    
+    console.log(this.data);
     
   }
   

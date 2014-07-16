@@ -27,3 +27,34 @@ a {
 .clearfix:after {
     clear: both;
 }
+
+button {
+	display: inline-block;
+	padding: 5px;
+	background-color: #ccc;
+	margin: 10px 5px 0 0;
+	border: none;
+}
+
+button:hover {
+	cursor: pointer;
+	background-color: #ddd;
+}
+
+button:focus, button:active {
+  outline: none;
+}
+
+/****************************
+ * Wrapper/Container
+ ***************************/
+
+header {
+	margin: 0 0 30px 0;
+	padding: 0 0 30px 0;
+	border-bottom: 1px solid #ccc;
+}
+
+#wrapper {
+	padding: 60px;
+}

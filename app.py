@@ -1,12 +1,18 @@
 import time
 from flask import Flask, jsonify, render_template, request
 
+try:
+    # this is how you would normally import
+    from flask.ext.cors import cross_origin
+except:
+    # support local usage without installed package
+    from flask_cors import cross_origin
+
 ################################################################################
 # Init
 ################################################################################
 
 app = Flask(__name__)
-app.config['CORS_ORIGINS'] = ['*']
 
 ################################################################################
 # Store SVG temporary
@@ -32,7 +38,8 @@ def parseData():
 # Serve index file
 ################################################################################
 
-@app.route('/', methods = ['GET'])
+@app.route("/")
+@cross_origin()
 def index():
   return render_template('index.html')
   

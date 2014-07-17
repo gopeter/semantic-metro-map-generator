@@ -6,8 +6,10 @@
   <title>Semantic Metro Map</title>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">  
   <link type="text/css" href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>  
   <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/hammer.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/snap.svg-min.js') }}"></script>  
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
 <body>
@@ -23,10 +25,12 @@
 
     <section class="clearfix">
       <p>Generate a semantic metro map based on GTFS data from <a href="http://semantic-metro-map-gtfs-api.herokuapp.com/">this API endpoint</a>.</p>
-      <button>Generate!</button>
+      <button>Generate! (could take a while)</button>
+      <svg id="svg"></svg>
     </section>
     
   </div>
+
 </body>
 
 </html>

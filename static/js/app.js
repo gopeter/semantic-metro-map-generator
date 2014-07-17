@@ -2,6 +2,8 @@ var SMMG = function() {
   
   this.data = [];
   this.triples = {};
+  this.points = [];
+  this.zoom = 200;
   
   // vars for coordinate calculation
   this.pixelOrigin_ = new google.maps.Point(256 / 2, 256 / 2);
@@ -31,8 +33,13 @@ SMMG.prototype = {
   
     // event handler
     $(document).hammer();
-    $(document).on('tap', '#generate', $.proxy(this.fetchData, this));
+    $(document).on('tap', '#generate', $.proxy(this.start, this));
     $(document).on('tap', '#download', $.proxy(this.download, this));    
+    $(document).on('change', '#agency', $.proxy(this.setAgency, this));    
+    $(document).on('tap', '#zoom-correct', $.proxy(this.setCorrectZoom, this));        
+    $(document).on('tap', '#zoom-apply', $.proxy(this.setZoom, this));            
+    
+    this.loadAgencies();
       
   },
   
@@ -61,6 +68,7 @@ SMMG.prototype = {
 
     // iterate through all triples to convert coordinates to pixels
     var coordinates = [];
+    this.points = []; // used to find the nearest points
     for (i in this.triples) {    
     
       var obj = this.triples[i];
@@ -73,6 +81,26 @@ SMMG.prototype = {
       };
       
       coordinates.push(tmp);
+      
+      var p = {"x":point.x, "y":point.y};
+        
+      if (this.points.length > 0) {      
+
+        // check if object is already in array
+        var contains = false;
+        for (var a = 0; a < this.points.length; a++) {
+          if (this.points[a].x == p.x && this.points[a].y == p.y) {
+            contains = true;
+          }
+        }
+        
+        if (!contains) {
+          this.points.push(p);
+        }
+          
+      } else {
+        this.points.push(p);                
+      }      
       
     }
 
@@ -102,8 +130,8 @@ SMMG.prototype = {
         return c['stop_id'] == obj.details.stop_id;
       });
       
-      var x = ((coordinate[0].x - origin.x) * 200) + 40;
-      var y = ((coordinate[0].y - origin.y) * 200) + 40;
+      var x = ((coordinate[0].x - origin.x) * this.zoom) + 40;
+      var y = ((coordinate[0].y - origin.y) * this.zoom) + 40;
       
       if (x > max.x) max.x = x;
       if (y > max.y) max.y = y;      
@@ -122,7 +150,7 @@ SMMG.prototype = {
     
   },
   
-  // some helpers from https://google-developers.appspot.com/maps/documentation/javascript/examples/full/map-coordinates 
+  // some geo helpers from https://google-developers.appspot.com/maps/documentation/javascript/examples/full/map-coordinates 
   bound: function(value, opt_min, opt_max) {
     if (opt_min != null) value = Math.max(value, opt_min);
     if (opt_max != null) value = Math.min(value, opt_max);
@@ -152,11 +180,89 @@ SMMG.prototype = {
 
   },
   
+  // closest pair of points problem, using this algorithm: http://rosettacode.org/wiki/Closest-pair_problem#JavaScript
+  distance: function(p1, p2) {
+    var dx = Math.abs(p1.x - p2.x);
+    var dy = Math.abs(p1.y - p2.y);
+    return Math.sqrt(dx*dx + dy*dy);
+  },
+ 
+  bruteforceClosestPair: function(arr) {
+  
+    if (arr.length < 2) {
+      return Infinity;
+    } else {
+      var minDist = this.distance(arr[0], arr[1]);
+      var minPoints = arr.slice(0, 2);
+   
+      for (var i=0; i<arr.length-1; i++) {
+        for (var j=i+1; j<arr.length; j++) {
+          if (this.distance(arr[i], arr[j]) < minDist) {
+            minDist = this.distance(arr[i], arr[j]);
+            minPoints = [ arr[i], arr[j] ];
+          }
+        }
+      }
+      return {
+        distance: minDist,
+        points: minPoints
+      };
+    }
+  },  
+  
   /***************************************
   * Events/Core functions
   ***************************************/  
   
-  fetchData: function() {
+  loadAgencies: function() {
+    
+    var self = this;
+    
+    $.when(
+      $.ajax({
+        url: self.API.base + 'agencies',
+        dataType: 'json'
+      })
+    ).then(function(agencies) {    
+      
+      var $select = $('#agency');
+      
+      $.each(agencies, function(i, agency) {
+        var selected = (agency.agency_key == 'flixbus-gmbh') ? 'selected' : '';
+        $select.append('<option ' + selected + ' value="' + agency.agency_key + '">' + agency.agency_name + '</option>');
+      });
+      
+    });
+    
+  },
+  
+  setAgency: function(el) {
+    this.API.agency = $(el.target).val();
+  },
+
+  setCorrectZoom: function() {
+    
+    // find the distance between the nearest points to get the minimum zoom factor to prevent overlapping nodes
+    var distance = this.bruteforceClosestPair(this.points);
+    
+    // points should have a spacing of 5px
+    // nodes radius is 24px so use 53px as base
+    this.zoom = 53 / distance.distance;
+    $('input[name="zoom-level"]').val(this.zoom);
+    
+  },
+  
+  setZoom: function() {
+    this.zoom = parseFloat($('input[name="zoom-level"]').val());
+    this.start();
+  },
+  
+  start: function() {
+  
+    // reset
+    this.data = [];
+    this.triples = {};    
+    $('#svg').html('');    
 
     var self = this;
 
@@ -179,6 +285,11 @@ SMMG.prototype = {
         // if route has no color, use a random one
         if (typeof route.route_color === 'undefined') {
           route.route_color = self.colors[i];
+        } else {
+          // check if color is a valid hex value
+          if (!route.route_color.match(/#/)) {
+            route.route_color = '#' + route.route_color;
+          }
         }
       
         // ... fetch all stops ...
@@ -373,6 +484,7 @@ SMMG.prototype = {
       }, success: function(file) {
         self.file = file;
         $('#download').show();
+        $('#zoom').show();
         $('#svg').show();            
       }
     });    

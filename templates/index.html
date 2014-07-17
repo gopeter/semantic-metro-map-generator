@@ -26,8 +26,14 @@
 
     <section class="clearfix">
       <p>Generate a semantic metro map based on GTFS data from <a href="http://semantic-metro-map-gtfs-api.herokuapp.com/">this API endpoint</a>.</p>
+      <select id="agency"></select>
       <button id="generate">Generate! (could take a while)</button>
       <button id="download">Download SVG file</button>
+      <div id="zoom">
+        <input type="text" name="zoom-level" value="200">
+        <button id="zoom-correct">Set correct zoom to  prevent overlapping nodes</button>
+        <button id="zoom-apply">Apply zoom</button>        
+      </div>
       <div id="svg-wrapper">
         <svg id="svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve">
          	<metadata xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:ex="http://example.com/"></metadata>

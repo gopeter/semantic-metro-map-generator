@@ -169,8 +169,8 @@ SMMG.prototype = {
     ).then(function(routes) {
     
       // create random colors for all routes
-      self.colors = randomColor({
-        count: routes.length
+      self.colors = Please.make_color({
+      	colors_returned: routes.length
       });
 
       // for each route ...

@@ -48,6 +48,15 @@ SMMG.prototype = {
     return len;
   },
   
+  sortArray: function(arr) {
+    arr.sort(function(a, b){
+      if(a < b) return -1;
+      if(a > b) return 1;
+      return 0;
+    });
+    return arr;
+  },
+  
   convertCoordinatesToPixels: function() {
 
     // iterate through all triples to convert coordinates to pixels
@@ -278,11 +287,7 @@ SMMG.prototype = {
         var to_id = self.triples[route.stop_id].details.stop_id;
         
         // sort IDs ascending to make it accessible by the metro-map frontend
-        var ids = [from_id, to_id];
-        ids.sort(function(a, b) {
-          return a - b;
-        });
-        
+        var ids = self.sortArray([from_id, to_id]);                 
         var id = ids.join('');
         
         var l = svg.line(from.x, from.y, to.x, to.y)

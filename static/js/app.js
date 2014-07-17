@@ -404,7 +404,7 @@ SMMG.prototype = {
   },
   
   download: function() {
-    window.open(this.file);
+    window.open('/maps/' + this.file);
   }
   
 };

@@ -6,6 +6,7 @@ from flask import Flask, jsonify, render_template, request
 ################################################################################
 
 app = Flask(__name__)
+app.config['CORS_ORIGINS'] = ['*']
 
 ################################################################################
 # Store SVG temporary

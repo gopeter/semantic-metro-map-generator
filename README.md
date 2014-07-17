@@ -23,7 +23,7 @@ You can use the generated SVG file to query routes with the [`semantic-metro-map
 
 Be aware: Just a proof of concept. No validations, no exception handling, no tests.
 
-**Note: to run this app locally, you have to start an instance of this GTFS API: [`node-gtfs`](https://github.com/brendannee/node-gtfs). Or jsut change the url on the very top of the `app.js` file.**
+**Note: to run this app locally, you have to start an instance of this GTFS API: [`node-gtfs`](https://github.com/brendannee/node-gtfs). Or just change the url on the very top of the `app.js` file.**
 
 ## Further examples
 

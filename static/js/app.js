@@ -381,12 +381,12 @@ SMMG.prototype = {
     for (i in this.triples) {
     
       var obj = this.triples[i];
-      rdf += '<rdf:Description rdf:about="http://example.com/' + obj.details.stop_id + '">';
+      rdf += '<rdf:Description rdf:about="http://example.com/Node' + obj.details.stop_id + '">';
         
         $.each(obj.via, function(i, route) {
           
           rdf += '<ex:via rdf:parseType="Resource">';
-            rdf += '<ex:Stop rdf:resource="http://example.com/' + route.stop_id + '" />';          
+            rdf += '<ex:Stop rdf:resource="http://example.com/Node' + route.stop_id + '" />';          
             rdf += '<ex:Line rdf:resource="http://example.com/Line' + route.line + '" />';		
             rdf += '<ex:Duration>' + route.duration + '</ex:Duration>';			
 				  rdf += '</ex:via>';

@@ -29,7 +29,7 @@ a {
 }
 
 button {
-	display: block;
+	display: inline-block;
 	padding: 5px;
 	background-color: #ccc;
 	margin: 10px 5px 0 0;
@@ -43,6 +43,10 @@ button:hover {
 
 button:focus, button:active {
   outline: none;
+}
+
+#download {
+  display: none;
 }
 
 /****************************
@@ -65,8 +69,4 @@ header {
   border: 1px solid #ccc;
   margin: 40px 0 0 0;
   display: none;
-}
-
-#svg g text {
-  text-anchor: middle;
 }

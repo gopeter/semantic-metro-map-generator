@@ -21,7 +21,7 @@ var SMMG = function() {
     };    
   }  
   
-  // Init!
+  // init!
   this.init();
 };
 
@@ -31,7 +31,8 @@ SMMG.prototype = {
   
     // event handler
     $(document).hammer();
-    $(document).on('tap', 'button', $.proxy(this.fetchData, this));
+    $(document).on('tap', '#generate', $.proxy(this.fetchData, this));
+    $(document).on('tap', '#download', $.proxy(this.download, this));    
       
   },
   
@@ -251,8 +252,6 @@ SMMG.prototype = {
     
     $('#svg').find('metadata').append(rdf);
     
-    console.log(rdf)
-    
     this.convertCoordinatesToPixels();    
     
     // generate new snap SVG 
@@ -344,7 +343,11 @@ SMMG.prototype = {
       });
       
       // draw node text
-      var t = svg.text(obj.details.position.x, obj.details.position.y + 4, obj.details.stop_id);    
+      var t = svg.text(obj.details.position.x, obj.details.position.y + 4, obj.details.stop_id).attr({
+        'font-family': 'Arial',
+        'font-size': '10',
+        'text-anchor': 'middle'
+      });    
       
       // group circle and text and append id to group
       snapNodes[obj.details.stop_id] = svg.g(c, t).attr({
@@ -355,7 +358,19 @@ SMMG.prototype = {
       
     }
     
-    $('#svg').show();
+    // generate file
+    var svg = $('#svg-wrapper').html();
+    $.ajax({
+      url: '/create',
+      type: 'post',
+      data: {
+        svg: svg
+      }, success: function(file) {
+        self.file = file;
+        $('#download').show();
+        $('#svg').show();            
+      }
+    });    
     
   },
   
@@ -386,6 +401,10 @@ SMMG.prototype = {
     
     return rdf;
     
+  },
+  
+  download: function() {
+    window.open(this.file);
   }
   
 };

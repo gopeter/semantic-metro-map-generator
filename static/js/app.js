@@ -1,7 +1,7 @@
 var SMMG = function() {
   
   this.data = [];
-  this.triples = [];
+  this.triples = {};
   
   // vars for coordinate calculation
   this.pixelOrigin_ = new google.maps.Point(256 / 2, 256 / 2);
@@ -9,10 +9,17 @@ var SMMG = function() {
   this.pixelsPerLonRadian_ = 256 / (2 * Math.PI);    
   
   // API settings
-  this.API = {
-    "base": "http://semantic-metro-map-gtfs-api.herokuapp.com/api/",
-    "agency": "flixbus-gmbh"
-  };    
+  if (document.location.hostname == "localhost") {
+    this.API = {
+      "base": "http://localhost:5001/api/",      
+      "agency": "flixbus-gmbh"
+    };    
+  } else {
+    this.API = {
+      "base": "http://semantic-metro-map-gtfs-api.herokuapp.com/api/",
+      "agency": "flixbus-gmbh"
+    };    
+  }  
   
   // Init!
   this.init();
@@ -150,9 +157,19 @@ SMMG.prototype = {
         dataType: 'json'
       })
     ).then(function(routes) {
+    
+      // create random colors for all routes
+      self.colors = randomColor({
+        count: routes.length
+      });
 
       // for each route ...
       $.each(routes, function(i, route) {
+      
+        // if route has no color, use a random one
+        if (typeof route.route_color === 'undefined') {
+          route.route_color = self.colors[i];
+        }
       
         // ... fetch all stops ...
         $.ajax({
@@ -187,18 +204,18 @@ SMMG.prototype = {
     // generate triples
     $.each(this.data, function(i, obj) {
     
-      for (var i = 0; i < obj.stops.length - 1; i++) {
+      for (var i = 0; i < obj.stops.length; i++) {
       
         // new index for next object
         var j = i + 1;
         
         // check if array is already created
-        if (!self.triples[obj.stops[i].stop_name]) {
+        if (!self.triples[obj.stops[i].stop_id]) {
 
-          self.triples[obj.stops[i].stop_name] = {};        
-          self.triples[obj.stops[i].stop_name]['via'] = [];        
+          self.triples[obj.stops[i].stop_id] = {};        
+          self.triples[obj.stops[i].stop_id]['via'] = [];        
         
-          self.triples[obj.stops[i].stop_name]['details'] = {
+          self.triples[obj.stops[i].stop_id]['details'] = {
             "stop_name": obj.stops[i].stop_name,
             "stop_id": obj.stops[i].stop_id,
             "stop_lat": obj.stops[i].stop_lat, 
@@ -206,14 +223,20 @@ SMMG.prototype = {
           };
         }
         
-        tmp = {
-          "stop_name": obj.stops[j].stop_name,
-          "stop_id": obj.stops[j].stop_id,
-          "line": obj.route.route_id,
-          "duration": Math.floor((Math.random() * 5) + 1) // use random duration because we can't query the duration between two stops
-        };
+        // there is no trip from the last stop
+        if (i < obj.stops.length - 1) {        
+          tmp = {
+            "stop_name": obj.stops[j].stop_name,
+            "stop_id": obj.stops[j].stop_id,
+            "line": obj.route.route_id,
+            "color": obj.route.route_color,
+            "duration": Math.floor((Math.random() * 5) + 1) // use random duration because we can't query the duration between two stops at the moment
+          };
+          
         
-        self.triples[obj.stops[i].stop_name]['via'].push(tmp);
+          self.triples[obj.stops[i].stop_id]['via'].push(tmp);          
+          
+        }
       }
         
     });
@@ -229,24 +252,106 @@ SMMG.prototype = {
     this.convertCoordinatesToPixels();    
     
     // generate new snap SVG 
-    var svg = Snap("#svg");
-    var svgNodes = [];
-    var svgEdges = [];    
+    var svg = Snap('#svg');
+    
+    var snapEdges = {};    
+    var svgEdges = svg.g().attr({id: 'Edges'});    
+    
+    var snapNodes = {};
+    var svgNodes = svg.g().attr({id: 'Nodes'});    
 
+    // draw edges
+    for (i in this.triples) {
+    
+      // draw edge line
+      var obj = this.triples[i];    
+      var routes = obj.via;
+      var from = obj.details.position;
+      var from_id = obj.details.stop_id;
+      
+      $.each(obj.via, function(j, route) {
+        
+        var to = self.triples[route.stop_id].details.position;
+        var to_id = self.triples[route.stop_id].details.stop_id;
+        
+        // sort IDs ascending to make it accessible by the metro-map frontend
+        var ids = [from_id, to_id];
+        ids.sort(function(a, b) {
+          return a - b;
+        });
+        
+        var id = ids.join('');
+        
+        var l = svg.line(from.x, from.y, to.x, to.y)
+                   .attr({
+                      stroke: route.color,
+                      strokeWidth: 1,
+                      id: id + '' + route.line
+                    })
+                    .data({
+                      'data-from-to': id
+                    });
+        
+        if (!snapEdges[id]) {
+          snapEdges[id] = [];
+        }
+
+        snapEdges[id].push(l)
+        
+      });
+
+    }
+    
+    $.each(snapEdges, function(i, edges) {
+  
+      // group edges
+      var g = svg.g();
+      $.each(edges, function(j, edge) {
+        g.add(edge);
+      });
+      
+      // add spacing between lines when there are multiple connections between two nodes    
+      if (edges.length > 1) {
+
+        for (var x = 0; x < edges.length; x++) {
+          var t = x * 3;
+          edges[x].transform('t' + t + ',' + t)
+        }    
+        
+        // move group to compensate spacing
+        var t = x * 2;
+        g.transform('t-' + t + ',-' + t)
+        
+      }      
+      
+      svgEdges.add(g);
+      
+    });
+
+    // draw nodes          
     for (i in this.triples) {
 
-      // draw nodes          
+      // draw node circle
       var obj = this.triples[i];
-      svgNodes[obj.details.stop_id] = svg.circle(obj.details.position.x, obj.details.position.y, 22);    
-      svgNodes[obj.details.stop_id].attr({
-        fill: "#fff",
-        stroke: "#000",
+      var c = svg.circle(obj.details.position.x, obj.details.position.y, 22).attr({
+        fill: '#fff',
+        stroke: '#000',
         strokeWidth: 2
-      });  
+      });
       
-      // draw edges
+      // draw node text
+      var t = svg.text(obj.details.position.x, obj.details.position.y + 4, obj.details.stop_id);    
+      
+      // group circle and text and append id to group
+      snapNodes[obj.details.stop_id] = svg.g(c, t).attr({
+        id: obj.details.stop_id
+      });
+      
+      svgNodes.add(snapNodes[obj.details.stop_id]);
       
     }
+    
+    $('#svg').show();
     
   },
   

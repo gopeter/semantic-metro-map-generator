@@ -58,3 +58,15 @@ header {
 #wrapper {
 	padding: 60px;
 }
+
+#svg {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #ccc;
+  margin: 40px 0 0 0;
+  display: none;
+}
+
+#svg g text {
+  text-anchor: middle;
+}

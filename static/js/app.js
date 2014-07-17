@@ -233,7 +233,6 @@ SMMG.prototype = {
             "duration": Math.floor((Math.random() * 5) + 1) // use random duration because we can't query the duration between two stops at the moment
           };
           
-        
           self.triples[obj.stops[i].stop_id]['via'].push(tmp);          
           
         }
@@ -248,7 +247,12 @@ SMMG.prototype = {
   generateSVG: function() {
 
     var self = this;
-    // var rdf = this.generateRDF();
+    var rdf = this.generateRDF();
+    
+    $('#svg').find('metadata').append(rdf);
+    
+    console.log(rdf)
+    
     this.convertCoordinatesToPixels();    
     
     // generate new snap SVG 
@@ -286,7 +290,7 @@ SMMG.prototype = {
                    .attr({
                       stroke: route.color,
                       strokeWidth: 1,
-                      id: id + '' + route.line
+                      id: id + 'Line' + route.line
                     })
                     .data({
                       'data-from-to': id
@@ -356,6 +360,31 @@ SMMG.prototype = {
   },
   
   generateRDF: function() {
+  
+    var rdf = '<rdf:RDF>';
+  
+    for (i in this.triples) {
+    
+      var obj = this.triples[i];
+      rdf += '<rdf:Description rdf:about="http://example.com/' + obj.details.stop_id + '">';
+        
+        $.each(obj.via, function(i, route) {
+          
+          rdf += '<ex:via rdf:parseType="Resource">';
+            rdf += '<ex:Stop rdf:resource="http://example.com/' + route.stop_id + '" />';          
+            rdf += '<ex:Line rdf:resource="http://example.com/Line' + route.line + '" />';		
+            rdf += '<ex:Duration>' + route.duration + '</ex:Duration>';			
+				  rdf += '</ex:via>';
+          
+        });
+        
+      rdf += '</rdf:Description>';      
+    
+    }
+    
+    rdf += '</rdf:RDF>';
+    
+    return rdf;
     
   }
   

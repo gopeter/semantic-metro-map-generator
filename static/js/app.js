@@ -289,7 +289,7 @@ SMMG.prototype = {
                    .attr({
                       stroke: route.color,
                       strokeWidth: 1,
-                      id: id + 'Line' + route.line
+                      id: 'Edge' + id + 'Line' + route.line
                     })
                     .data({
                       'data-from-to': id
@@ -351,7 +351,7 @@ SMMG.prototype = {
       
       // group circle and text and append id to group
       snapNodes[obj.details.stop_id] = svg.g(c, t).attr({
-        id: obj.details.stop_id
+        id: 'Node' + obj.details.stop_id
       });
       
       svgNodes.add(snapNodes[obj.details.stop_id]);

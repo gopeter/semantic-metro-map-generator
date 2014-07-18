@@ -291,7 +291,6 @@ SMMG.prototype = {
         if (typeof route.route_color === 'undefined' || route.route_color == '') {
           route.route_color = self.colors[i];
         } else {
-          console.log('foo' + route.route_color);
           // check if color is a valid hex value
           if (!route.route_color.match(/#/)) {
             route.route_color = '#' + route.route_color;

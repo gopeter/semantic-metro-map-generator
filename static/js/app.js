@@ -518,7 +518,9 @@ SMMG.prototype = {
         $('#download').show();
         $('#zoom').show();
         $('#svg').show();         
-        $('.spinner').removeClass('show')
+        setTimeout(function() {
+          $('.spinner').removeClass('show');
+        }, 500)
       }
     });    
     

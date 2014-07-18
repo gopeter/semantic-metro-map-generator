@@ -520,7 +520,7 @@ SMMG.prototype = {
         $('#svg').show();         
         setTimeout(function() {
           $('.spinner').removeClass('show');
-        }, 500)
+        }, 500);
       }
     });    
     

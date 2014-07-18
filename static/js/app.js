@@ -435,19 +435,50 @@ SMMG.prototype = {
         g.add(edge);
       });
       
+      var factor = 4;      
+      
       // add spacing between lines when there are multiple connections between two nodes    
       if (edges.length > 1) {
+      
+        // get first edge of group to calculate pitch and move all other edges parallel to the first one
+        var edge = edges[0];
+        var x1 = parseFloat(edge.attr('x1'));
+        var x2 = parseFloat(edge.attr('x2'));
+        var y1 = parseFloat(edge.attr('y1'));
+        var y2 = parseFloat(edge.attr('y2'));
+        
+        var m1 = (y2 - y1) / (x2 - x1);
+        var m2 = -1 / m1;
+        
+        var m2a = (180/Math.PI) * Math.atan(m2);
+        
+        console.log(m2a, edge)
+        
+        var vx, vy;
 
         for (var x = 0; x < edges.length; x++) {
-          var t = x * 3;
-          edges[x].transform('t' + t + ',' + t)
+
+          var f = factor * x;
+          vx = f * Math.sin(m2a + 45);
+          vy = f * Math.cos(m2a + 45);
+        
+          var tx1 = x1 + vx;
+          var ty1 = y1 + vy;
+          var tx2 = x2 + vx;
+          var ty2 = y2 + vy;
+          
+          edges[x].attr({
+            'x1': tx1,
+            'y1': ty1,
+            'x2': tx2,
+            'y2': ty2
+          });
         }    
-        
-        // move group to compensate spacing
-        var t = x * 2;
-        g.transform('t-' + t + ',-' + t)
-        
-      }      
+      }
+      
+      // move group to compensate spacing
+      var t = (x * factor) / 2;
+      g.transform('t0,-' + t)            
       
       svgEdges.add(g);
       

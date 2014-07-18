@@ -263,7 +263,7 @@ SMMG.prototype = {
   },
   
   start: function() {
-  
+     
     // reset
     this.data = [];
     this.triples = {};    
@@ -275,7 +275,10 @@ SMMG.prototype = {
     $.when(
       $.ajax({
         url: self.API.base + 'routes/' + self.API.agency,
-        dataType: 'json'
+        dataType: 'json',
+        beforeSend: function() {
+          $('.spinner').addClass('show');
+        }
       })
     ).then(function(routes) {
     
@@ -514,7 +517,8 @@ SMMG.prototype = {
         self.file = file;
         $('#download').show();
         $('#zoom').show();
-        $('#svg').show();            
+        $('#svg').show();         
+        $('.spinner').removeClass('show')
       }
     });    
     

@@ -65,6 +65,10 @@ SMMG.prototype = {
     return arr;
   },
   
+  removeSpecialChars: function(str) {
+    return str.replace(/[^\w]/gi, ''); 
+  },
+  
   convertCoordinatesToPixels: function() {
 
     // iterate through all triples to convert coordinates to pixels
@@ -400,13 +404,14 @@ SMMG.prototype = {
         
         // sort IDs ascending to make it accessible by the metro-map frontend
         var ids = self.sortArray([from_id, to_id]);                 
-        var id = ids.join('');
+        var id = self.removeSpecialChars(ids.join(''));
+        var line = self.removeSpecialChars(route.line);        
         
         var l = svg.line(from.x, from.y, to.x, to.y)
                    .attr({
                       stroke: route.color,
                       strokeWidth: 1,
-                      id: 'Edge' + id + 'Line' + route.line
+                      id: 'Edge' + id + 'Line' + line
                     })
                     .data({
                       'data-from-to': id
@@ -467,8 +472,9 @@ SMMG.prototype = {
       });    
       
       // group circle and text and append id to group
+      var n = this.removeSpecialChars(obj.details.stop_id);
       snapNodes[obj.details.stop_id] = svg.g(c, t).attr({
-        id: 'Node' + obj.details.stop_id
+        id: 'Node' + n
       });
       
       svgNodes.add(snapNodes[obj.details.stop_id]);
@@ -494,18 +500,23 @@ SMMG.prototype = {
   
   generateRDF: function() {
   
+    var self = this;
     var rdf = '<rdf:RDF>';
   
     for (i in this.triples) {
     
       var obj = this.triples[i];
-      rdf += '<rdf:Description rdf:about="http://example.com/' + obj.details.stop_id + '">';
+      var stop_from = this.removeSpecialChars(obj.details.stop_id);
+      rdf += '<rdf:Description rdf:about="http://example.com/' + stop_from + '">';
         
         $.each(obj.via, function(i, route) {
           
+          var stop_to = self.removeSpecialChars(obj.details.stop_id);
+          var line = self.removeSpecialChars(route.line);
+          
           rdf += '<ex:via rdf:parseType="Resource">';
-            rdf += '<ex:Stop rdf:resource="http://example.com/' + route.stop_id + '" />';          
-            rdf += '<ex:Line rdf:resource="http://example.com/Line' + route.line + '" />';		
+            rdf += '<ex:Stop rdf:resource="http://example.com/' + stop_to + '" />';          
+            rdf += '<ex:Line rdf:resource="http://example.com/Line' + line + '" />';		
             rdf += '<ex:Duration>' + route.duration + '</ex:Duration>';			
 				  rdf += '</ex:via>';
           

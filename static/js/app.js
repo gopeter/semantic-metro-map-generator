@@ -4,6 +4,7 @@ var SMMG = function() {
   this.triples = {};
   this.points = [];
   this.zoom = 200;
+  this.svgWrapper = $('#svg').html();
   
   // vars for coordinate calculation
   this.pixelOrigin_ = new google.maps.Point(256 / 2, 256 / 2);
@@ -262,7 +263,7 @@ SMMG.prototype = {
     // reset
     this.data = [];
     this.triples = {};    
-    $('#svg').html('');    
+    $('#svg').html(this.svgWrapper);    
 
     var self = this;
 

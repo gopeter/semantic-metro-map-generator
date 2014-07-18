@@ -511,7 +511,7 @@ SMMG.prototype = {
         
         $.each(obj.via, function(i, route) {
           
-          var stop_to = self.removeSpecialChars(obj.details.stop_id);
+          var stop_to = self.removeSpecialChars(route.stop_id);
           var line = self.removeSpecialChars(route.line);
           
           rdf += '<ex:via rdf:parseType="Resource">';

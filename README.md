@@ -8,7 +8,7 @@ You can use the generated SVG file to query routes with the [`semantic-metro-map
 
 ## Todos
 
-- Use arrows as direction indicator
+- ~~Use arrows as direction indicator~~
 - Use shapes to draw correct routes instead of simple lines
 - Use correct durations instead of random generated ones
 

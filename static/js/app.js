@@ -68,6 +68,51 @@ SMMG.prototype = {
   removeSpecialChars: function(str) {
     return str.replace(/[^\w]/gi, ''); 
   },
+    
+  circleToPath: function(cx, cy, r) {
+  	var cx = parseFloat(cx); 		
+  	var cy = parseFloat(cy); 		
+  	var r = parseFloat(r); 		
+		
+		var path = "M" + (cx-r).toString() + "," + cy.toString();
+		path += "a" + r.toString() + "," + r.toString() + " 0 1,0 " + (2 * r).toString() + ",0";
+		path += "a" + r.toString() + "," + r.toString() + " 0 1,0 " + (-2 * r).toString() + ",0";
+
+    return path;
+    
+  },
+  
+  getTriangleCoordinates: function(ax, ay, x1, y1, x2, y2) {
+  
+    var h = 5;
+    var b = 3.5
+    var xd = x2 - x1;;
+    
+    var m1 = (y2 - y1) / (x2 - x1);
+    var m2 = -1 / m1;  
+    
+    var m1x = h / (Math.sqrt(1 + Math.pow(m1, 2)));
+    var m1y = (h * m1) / Math.sqrt(1 + Math.pow(m1, 2));             
+    
+    var m2x = b / (Math.sqrt(1 + Math.pow(m2, 2)));
+    var m2y = (b * m2) / Math.sqrt(1 + Math.pow(m2, 2));  
+    
+    if (xd > 0) {
+        var pabX = ax - m1x;
+        var pabY = ay - m1y;                    
+    } else {
+        var pabX = ax + m1x;
+        var pabY = ay + m1y;            
+    }
+    
+    var pacX = pabX - m2x;
+    var pacY = pabY - m2y;          
+    
+    var pbcX = pabX + m2x;
+    var pbcY = pabY + m2y;      
+   
+    return [ax, ay, pacX, pacY, pbcX, pbcY];
+  },
   
   convertCoordinatesToPixels: function() {
 
@@ -125,7 +170,7 @@ SMMG.prototype = {
     
     origin['y'] = coordinates[0].y;
     
-    // set new x,y pixel coordinates to tripel object
+    // set new x,y pixel coordinates to tripel object according to the zoom
     for (i in this.triples) {    
     
       var obj = this.triples[i];
@@ -143,7 +188,7 @@ SMMG.prototype = {
 
       obj.details['position'] = {};      
       obj.details['position']['x'] = x;
-      obj.details['position']['y'] = y;      
+      obj.details['position']['y'] = y;     
       
     }    
     
@@ -189,7 +234,7 @@ SMMG.prototype = {
   distance: function(p1, p2) {
     var dx = Math.abs(p1.x - p2.x);
     var dy = Math.abs(p1.y - p2.y);
-    return Math.sqrt(dx*dx + dy*dy);
+    return Math.sqrt(dx * dx + dy * dy);
   },
  
   bruteforceClosestPair: function(arr) {
@@ -385,11 +430,11 @@ SMMG.prototype = {
     // generate new snap SVG 
     var svg = Snap('#svg');
     
-    var snapEdges = {};    
-    var svgEdges = svg.g().attr({id: 'Edges'});    
+    var snapEdges = {};
+    var svgEdges = svg.g().attr({id: 'Edges'});     
     
     var snapNodes = {};
-    var svgNodes = svg.g().attr({id: 'Nodes'});    
+    var svgNodes = svg.g().attr({id: 'Nodes'});        
 
     // draw edges
     for (i in this.triples) {
@@ -410,22 +455,32 @@ SMMG.prototype = {
         var id = self.removeSpecialChars(ids.join(''));
         var line = self.removeSpecialChars(route.line);        
         
-        var l = svg.line(from.x, from.y, to.x, to.y)
-                   .attr({
-                      stroke: route.color,
-                      strokeWidth: 1,
-                      id: 'Edge' + id + 'Line' + line
-                    })
-                    .data({
-                      'data-from-to': id
-                    });
+        // create tmp arrow
+        // correct coordinates will be added after parallel shifting of line
+        var t = svg.polyline(-10, -10, -20, -20, -30, -10)
+          .attr({
+            fill: route.color,
+            id: 'Arrow' + id + 'Line' + line
+          })
+          .data({
+            'target-x': to.x,
+            'target-y': to.y            
+          });       
+        
+        var l = svg.path('M' + from.x + ' ' + from.y + ' L' + to.x + ' ' + to.y)
+          .attr({
+            stroke: route.color,
+            strokeWidth: 1,
+            id: 'Edge' + id + 'Line' + line
+          });
+        
+        var tmp = svg.g(l, t);
         
         if (!snapEdges[id]) {
           snapEdges[id] = [];
         }
 
-        snapEdges[id].push(l)
-        
+        snapEdges[id].push(tmp)        
       });
 
     }
@@ -439,41 +494,79 @@ SMMG.prototype = {
       });
       
       var factor = 4;
-      var x = 1;
+      var x = 0;
+      
+      // get first edge of group to calculate pitch and move all other edges parallel to the first one
+      var edge = edges[0];
+      
+      var path = Snap.parsePathString(edge[0].attr('path'));
+      
+      // edge[1] = arrow, edge[0] = line
+      var x1 = path[0][1];
+      var x2 = path[1][1];
+      var y1 = path[0][2];
+      var y2 = path[1][2];
       
       // add spacing between lines when there are multiple connections between two nodes    
       if (edges.length > 1) {
-      
-        // get first edge of group to calculate pitch and move all other edges parallel to the first one
-        var edge = edges[0];
-        var x1 = parseFloat(edge.attr('x1'));
-        var x2 = parseFloat(edge.attr('x2'));
-        var y1 = parseFloat(edge.attr('y1'));
-        var y2 = parseFloat(edge.attr('y2'));
         
         var m1 = (y2 - y1) / (x2 - x1);
         var m2 = -1 / m1;
+        
+        // move all grouped lines to center lines 
+        var correct = ((edges.length * factor) / 2) - factor;
 
-        for (x; x < edges.length; x++) {
+        for (var x = 0; x < edges.length; x++) {
+        
+          // get x1, y1, x2, y2 for each edge once again to get the right direction
+          var singlePath = Snap.parsePathString(edges[x][0].attr('path'));
+          var x1 = singlePath[0][1];
+          var x2 = singlePath[1][1];
+          var y1 = singlePath[0][2];
+          var y2 = singlePath[1][2];          
 
           var l = factor * x;
-
           var vx = l / (Math.sqrt(1 + Math.pow(m2,2)));
           var vy = (l * m2) / Math.sqrt(1 + Math.pow(m2,2));
           
-          edges[x].attr({
-            'x1': x1 + vx,
-            'y1': y1 + vy,
-            'x2': x2 + vx,
-            'y2': y2 + vy
+          // move edge
+          var tx1 = (x1 + vx) - correct;
+          var ty1 = (y1 + vy) - correct;
+          var tx2 = (x2 + vx) - correct;
+          var ty2 = (y2 + vy) - correct;                              
+          
+          var path = 'M' + tx1 + ' ' + ty1 + ' L' + tx2 + ' ' + ty2;
+          var circlePath = self.circleToPath(edges[x][1].data('target-x'), edges[x][1].data('target-y'), 24);
+          
+          edges[x][0].attr({
+            'path': path
           });
+          
+          // move arrow
+          var intersection = Snap.path.intersection(path, circlePath);
+          if (intersection.length > 0) {
+            edges[x][1].attr({
+              'points': self.getTriangleCoordinates(intersection[0].x, intersection[0].y, tx1, ty1, tx2, ty2)
+            }); 
+          }
+                    
         }
             
-      }
-      // move group to compensate spacing
-      var t = ((x * factor) / 2) - factor;
-      g.transform('t-' + t + ',-' + t)            
+      } else {
+
+        // move single arrow        
+        var path = Snap.parsePathString(edges[0][0].attr('path'));
+        var circlePath = self.circleToPath(edges[0][1].data('target-x'), edges[0][1].data('target-y'), 24);        
+        var intersection = Snap.path.intersection(path, circlePath);
+
+        if (intersection.length > 0) {
+          edges[0][1].attr({
+            'points': self.getTriangleCoordinates(intersection[0].x, intersection[0].y, x1, y1, x2, y2)
+          }); 
+        }
+      }    
       
+      // group edges
       svgEdges.add(g);
       
     });
@@ -483,7 +576,8 @@ SMMG.prototype = {
 
       // draw node circle
       var obj = this.triples[i];
-      var c = svg.circle(obj.details.position.x, obj.details.position.y, 22).attr({
+      var path = self.circleToPath(obj.details.position.x, obj.details.position.y, 22);
+      var c = svg.path(path).attr({
         fill: '#fff',
         stroke: '#000',
         strokeWidth: 2
@@ -568,4 +662,4 @@ SMMG.prototype = {
 
 $(function() {
   var smmg = new SMMG();
-});
+}); 
